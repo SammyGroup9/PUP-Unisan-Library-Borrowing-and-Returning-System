@@ -1,0 +1,371 @@
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
+ */
+package com.mycompany.librarymanagementsystem;
+
+/**
+ *
+ * @author Errica
+ */
+import javax.swing.*;
+import java.sql.*;
+import java.util.ArrayList;
+import javax.swing.table.DefaultTableModel;
+
+public class DataHandler {
+    public static ArrayList<String> getAllData(){
+        ArrayList<String> userList = new ArrayList<>();
+        try (Connection conn = DatabaseConnector.getConnection()) {
+            String sql = "SELECT * FROM users";
+            try (PreparedStatement stmt = conn.prepareStatement(sql);
+                 ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    // Process the results
+                    String columnName = rs.getString("username");
+                    // Do something with the data
+                    //JOptionPane.showMessageDialog(null, "The data are " + columnName);
+                    userList.add(columnName);
+                }
+            }
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(null, "Database connection error: " + e.getMessage());
+        }
+        return userList;
+    }
+//Query for loginUser
+    public static boolean loginUser(String uname, String pass) {
+        try (Connection conn = DatabaseConnector.getConnection()) {
+            String query = "SELECT * FROM users WHERE user_name = ? AND user_password = ?";
+            PreparedStatement pstmt = conn.prepareStatement(query);
+            pstmt.setString(1, uname);
+            pstmt.setString(2, pass);
+            ResultSet rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                JOptionPane.showMessageDialog(null,"Login Success");
+                int columnId = rs.getInt("stu_id");
+
+                RoomLibrary library = new RoomLibrary();
+                library.studentID11.setText(String.valueOf(columnId));
+                library.setVisible(true);
+               
+                // User exists with the provided username and password
+                return true;
+            }
+        } catch (SQLException e) {
+        }
+
+        // No user found with the provided username and password
+        return false;
+    }
+        public static String getBookID(String book_name) {
+        try (Connection conn = DatabaseConnector.getConnection()) {
+            String query = "SELECT * FROM library_books WHERE book_name = ?";
+            PreparedStatement pstmt = conn.prepareStatement(query);
+            pstmt.setString(1, book_name);
+            ResultSet rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                String columnBookId = String.valueOf(rs.getInt("book_id"));
+                // User exists with the provided username and password
+                return columnBookId;
+            }
+        } catch (SQLException e) {
+        }
+
+        // No user found with the provided username and password
+        return null;
+    }
+
+    //Create User
+    public static boolean registerUser(String uname, String pass, String firstname, String lastname) {
+        try (Connection conn = DatabaseConnector.getConnection()) {
+            // Check if username exists
+            String checkQuery = "SELECT * FROM users WHERE user_name = ?";
+            PreparedStatement checkStmt = conn.prepareStatement(checkQuery);
+            checkStmt.setString(1, uname);
+          
+            ResultSet rs = checkStmt.executeQuery();
+
+            if (rs.next()) {
+                return true;
+            } else {
+                // Insert new user
+                String insertQuery = "INSERT INTO users (user_name, user_password, user_firstname, user_lastname) VALUES (?, ?, ?, ?)";
+                PreparedStatement insertStmt = conn.prepareStatement(insertQuery);
+                insertStmt.setString(1, uname);
+                insertStmt.setString(2, pass);
+                insertStmt.setString(3, firstname);
+                insertStmt.setString(4, lastname);
+                insertStmt.executeUpdate();
+                return false;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+    
+   
+      //Inserting books To the Table
+        public static boolean borrowedBooks(int book_id, String book_name, int book_quantity, int stu_id, String date_borrow) {
+        try (Connection conn = DatabaseConnector.getConnection()) {
+            // Check if username exists
+            String checkQuery = "SELECT * FROM borrowed_books WHERE book_name = ? AND stu_id = ? ";
+            PreparedStatement checkStmt = conn.prepareStatement(checkQuery);
+            checkStmt.setString(1, book_name);    
+            checkStmt.setInt(2, stu_id);
+            ResultSet rs = checkStmt.executeQuery();
+            if (rs.next()) {
+                return true;
+            }
+            else {
+                // Insert new user
+                String insertQuery = "INSERT INTO borrowed_books (book_id, book_name, book_quantity, stu_id, date_borrow) VALUES (?,?,?,?,?)";
+                PreparedStatement insertStmt = conn.prepareStatement(insertQuery);
+                insertStmt.setInt(1, book_id);
+                insertStmt.setString(2, book_name);
+                insertStmt.setInt(3, book_quantity);
+                insertStmt.setInt(4, stu_id);
+                insertStmt.setString(5, date_borrow);
+                insertStmt.executeUpdate();
+                JOptionPane.showMessageDialog(null,"Book Added Succesfully");
+
+                return false;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+        
+    }
+     //Check If The Book is Exixted in The Table
+    public static boolean isBookExist(int book_id, String book_name, int book_quantity, int stu_id, String date_borrow) {
+        try (Connection conn = DatabaseConnector.getConnection()) {
+            // Check if username exists
+            String checkQuery = "SELECT * FROM borrowed_books WHERE book_name = ? AND stu_id = ? ";
+            PreparedStatement checkStmt = conn.prepareStatement(checkQuery);
+            checkStmt.setString(1, book_name);    
+            checkStmt.setInt(2, stu_id);
+            ResultSet rs = checkStmt.executeQuery();
+            return (rs.next());
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+        
+    }
+    
+        public static void addBorrow(int book_id, String book_name, int book_quantity, int stu_id, String date_borrow) {
+        try (Connection conn = DatabaseConnector.getConnection()) {
+            // Check if username exists
+                String insertQuery = "INSERT INTO borrowed_books (book_id, book_name, book_quantity, stu_id, date_borrow) VALUES (?,?,?,?,?)";
+                PreparedStatement insertStmt = conn.prepareStatement(insertQuery);
+                insertStmt.setInt(1, book_id);
+                insertStmt.setString(2, book_name);
+                insertStmt.setInt(3, book_quantity);
+                insertStmt.setInt(4, stu_id);
+                insertStmt.setString(5, date_borrow);
+                insertStmt.executeUpdate();
+                JOptionPane.showMessageDialog(null,"Book Added Succesfully");
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        
+    }
+    
+        
+        
+          public static boolean returnBooks(int borrower_id, String book_name, int book_quantity, String date_borrow,String date_return) {
+        try (Connection conn = DatabaseConnector.getConnection()) {
+            // Check if username exists
+            String checkQuery = "SELECT * FROM returned_books WHERE book_name = ? AND borrower_id = ? ";
+            PreparedStatement checkStmt = conn.prepareStatement(checkQuery);
+            checkStmt.setString(1, book_name);    
+            checkStmt.setInt(2, borrower_id);
+            ResultSet rs = checkStmt.executeQuery();
+            if (rs.next()) {
+                return true;
+            }
+            else {
+                // Insert to the returned book Table
+                String insertQuery = "INSERT INTO returned_books (borrower_id, book_name, book_quantity, date_borrow, date_return) VALUES (?,?,?,?,?)";
+                PreparedStatement insertStmt = conn.prepareStatement(insertQuery);
+                insertStmt.setInt(1, borrower_id);
+                insertStmt.setString(2, book_name);
+                insertStmt.setInt(3, book_quantity);
+                insertStmt.setString(4, date_borrow);
+                insertStmt.setString(5, date_return);
+                insertStmt.executeUpdate();
+                return false;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+        
+    }
+          //deleting book
+         public static boolean delbook(String book_name) {
+        try (Connection conn = DatabaseConnector.getConnection()) {
+            // Check if username exists
+            String checkQuery = "SELECT * FROM library_books WHERE book_name = ?";
+            PreparedStatement checkStmt = conn.prepareStatement(checkQuery);
+            checkStmt.setString(1, book_name);
+          
+            ResultSet rs = checkStmt.executeQuery();
+
+            if (rs.next()) {
+                String insertQuery = "DELETE FROM public.library_books WHERE book_name = ?";
+                PreparedStatement insertStmt = conn.prepareStatement(insertQuery);
+                insertStmt.setString(1, book_name);
+                insertStmt.executeUpdate();
+                return true;
+            } else {
+                // Insert new user
+                
+                return false;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+         }
+// deleting notif
+          public static boolean delnotif(int borrower_id) {
+        try (Connection conn = DatabaseConnector.getConnection()) {
+            // Check if username exists
+            String checkQuery = "SELECT * FROM returned_books WHERE borrower_id = ?";
+            PreparedStatement checkStmt = conn.prepareStatement(checkQuery);
+            checkStmt.setInt(1, borrower_id);
+          
+            ResultSet rs = checkStmt.executeQuery();
+
+            if (rs.next()) {
+                String insertQuery = "DELETE FROM returned_books WHERE borrower_id = ?";
+                PreparedStatement insertStmt = conn.prepareStatement(insertQuery);
+                insertStmt.setInt(1, borrower_id);
+                insertStmt.executeUpdate();
+                return true;
+            } else {
+                // Insert new user
+                
+                return false;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+         }
+
+         public static boolean  quantitybook (String book_name, int book_quantity) {
+        try (Connection conn = DatabaseConnector.getConnection()) {
+
+           PreparedStatement checkStmt = conn.prepareStatement("SELECT book_quantity FROM library_books WHERE book_name = ?");
+            checkStmt.setString(1, book_name);
+
+          
+            ResultSet rs = checkStmt.executeQuery();
+
+            if (rs.next()) {
+               
+                int currentQuantity = rs.getInt("book_quantity");
+               
+               if (currentQuantity >= book_quantity) {
+                    int updatedQuantity = currentQuantity - book_quantity;
+                    
+                PreparedStatement updatetStmt = conn.prepareStatement("UPDATE library_books SET book_quantity = ?, book_name = ? WHERE book_name = ?");
+                updatetStmt.setInt(1, updatedQuantity);
+                updatetStmt.setString(2, book_name);
+                updatetStmt.setString(3, book_name);
+                
+                updatetStmt.executeUpdate();
+                System.out.println(book_quantity + "copies of " + book_name + " succesfully");
+               }else {
+                    JOptionPane.showMessageDialog(null," Insufficient book  '" + book_name + "' in bookshelf ");
+                    
+                
+               return false;
+            }
+            return true;
+            } 
+         
+        } catch (SQLException e) {
+            e.printStackTrace();
+         }
+            return false;
+
+        }
+         
+         public static boolean  returnBook (String book_name, int book_quantity) {
+        try (Connection conn = DatabaseConnector.getConnection()) {
+
+           PreparedStatement checkStmt = conn.prepareStatement("SELECT book_quantity FROM library_books WHERE book_name = ?");
+            checkStmt.setString(1, book_name);
+
+          
+            ResultSet rs = checkStmt.executeQuery();
+
+            if (rs.next()) {
+               
+                int currentQuantity = rs.getInt("book_quantity");
+               
+//               currentQuantity >= book_quantity 
+                    int updatedQuantity = currentQuantity + book_quantity;
+                    
+                PreparedStatement updatetStmt = conn.prepareStatement("UPDATE library_books SET book_quantity = ?, book_name = ? WHERE book_name = ?");
+                updatetStmt.setInt(1, updatedQuantity);
+                updatetStmt.setString(2, book_name);
+                updatetStmt.setString(3, book_name);
+                
+                updatetStmt.executeUpdate();
+                System.out.println(book_name + " Returned succesfully ");
+//                int student = rs.getInt("stud_id");
+                
+//               }else {
+//                    JOptionPane.showMessageDialog(null," Insufficient book  '" + book_name + "' in bookshelf ");
+//                    
+                
+               return true;
+//            }
+//            return true;
+            } 
+         
+        } catch (SQLException e) {
+            e.printStackTrace();
+         }
+            return false;
+
+        }
+         
+         public static boolean delreturn(String book_name,int id) {
+        try (Connection conn = DatabaseConnector.getConnection()) {
+            // Check if username exists
+            String checkQuery = "SELECT * FROM borrowed_books WHERE book_name = ? AND stu_id = ?";
+            PreparedStatement checkStmt = conn.prepareStatement(checkQuery);
+            checkStmt.setString(1, book_name);
+            checkStmt.setInt(2, id);
+          
+            ResultSet rs = checkStmt.executeQuery();
+
+            if (rs.next()) {
+                String insertQuery = "DELETE FROM public.borrowed_books WHERE book_name = ? AND stu_id = ?";
+                PreparedStatement insertStmt = conn.prepareStatement(insertQuery);
+                insertStmt.setString(1, book_name);
+                insertStmt.setInt(2, id);
+                insertStmt.executeUpdate();
+                return true;
+            } else {
+                // Insert new user
+                
+                return false;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+         }
+}
